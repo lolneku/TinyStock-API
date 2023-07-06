@@ -1,9 +1,8 @@
 {
-  "type": "module",
   "name": "tinystock-api",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "api.js",
   "scripts": {
     "test": "jest --watchAll ---verbose"
   },

@@ -1,5 +1,5 @@
-import express from 'express'
-import crypto from 'crypto'
+const express = require('express');
+const crypto = require('crypto');
 const app = express();
 const currentDate = new Date();
 var username;
@@ -28,16 +28,16 @@ const tickers = [
 ];
 
 app.use((req, res, next) => {
-    // If 'Authorization' header not present
+    // If auth header not present
     if (!req.get('Authorization')) {
         var err = new Error('Not Authenticated!')
         // Set status code to '401 Unauthorized' and 'WWW-Authenticate' header to 'Basic'
         res.status(401).set('WWW-Authenticate', 'Basic')
         next(err)
     }
-    // If 'Authorization' header present
+    // If auth header present
     else {
-        // Decode the 'Authorization' header Base64 value
+        // Decode the auth header
         var credentials = Buffer.from(req.get('Authorization').split(' ')[1], 'base64')
             .toString()
             .split(':')
@@ -47,12 +47,10 @@ app.use((req, res, next) => {
         // If credentials are not valid
         if (username == null) {
             var err = new Error('Not Authenticated!')
-            // Set status code to '401 Unauthorized' and 'WWW-Authenticate' header to 'Basic'
             res.status(401).set('WWW-Authenticate', 'Basic')
             next(err)
         }
         res.status(200)
-        // Continue the execution
         next()
     }
 })
@@ -74,6 +72,7 @@ app.get('/tickers/:ticker/history', (req, res) => {
     res.json(historicalPrices);
 });
 
+//Get a double from a hash input then % by maxInt
 function getValue(hashedValue, maxInt) {
     const hashInteger = BigInt('0x' + Buffer.from(hashedValue, 'hex').toString('hex'));
     const doubleValue = Number(hashInteger) % Number(maxInt);
@@ -95,7 +94,7 @@ function generateHistoricalPrices(ticker) {
     return historicalPrices;
 }
 
-//Hashes dateTime with Ticker name to create a unique price for that ticker on that day: important for historical prices.
+//Hashes dateTime with Ticker name to create a unique price for that ticker on that day; important for historical prices.
 function hashDateTime(dateTime, inputString, checkPF) {
     let input = `${dateTime.toISOString()}${inputString}`;
     if (checkPF) { input = `${dateTime.toISOString()}${inputString}${username}`; }
@@ -103,6 +102,7 @@ function hashDateTime(dateTime, inputString, checkPF) {
     return hash;
 }
 
+//Creates portfolio, uses a BigInt from the hash value of username to generate the tickers which will display in portfolio
 function hashPF() {
     const hashUser = crypto.createHash('sha256').update(username).digest('hex');
     var tickerAmount = getValue(hashUser, 10) + 1;
@@ -133,5 +133,10 @@ function splitStringBySize(str, sizeInt) {
     return str.match(regex);
 }
 
+const port = 8080;
 
-export default app
+app.listen(port, () => {
+    console.log(`Server is listening on port ${port}`);
+});
+
+module.exports = app;
