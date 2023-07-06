@@ -39,11 +39,8 @@ app.use((req, res, next) => {
     else {
         // Decode the 'Authorization' header Base64 value
         var credentials = Buffer.from(req.get('Authorization').split(' ')[1], 'base64')
-            // <Buffer 75 73 65 72 6e 61 6d 65 3a 70 61 73 73 77 6f 72 64>
             .toString()
-            // username:password
             .split(':')
-        // ['username', 'password']
 
         username = credentials[0];
 
@@ -61,11 +58,9 @@ app.use((req, res, next) => {
 })
 
 app.get('/tickers', (req, res) => {
-    const portfolio = tickers.map(ticker => ({
-        symbol: ticker,
-        price: getPrice(hashDateTime(currentDate, ticker, true))
-    }));
-    res.json(portfolio);
+
+
+    res.json(hashPF());
 });
 
 app.get('/tickers/:ticker/history', (req, res) => {
@@ -79,10 +74,9 @@ app.get('/tickers/:ticker/history', (req, res) => {
     res.json(historicalPrices);
 });
 
-function getPrice(hashedValue) {
+function getValue(hashedValue, maxInt) {
     const hashInteger = BigInt('0x' + Buffer.from(hashedValue, 'hex').toString('hex'));
-    const maxInteger = BigInt('0xffff');
-    const doubleValue = Number(hashInteger) % Number(maxInteger);
+    const doubleValue = Number(hashInteger) % Number(maxInt);
     return doubleValue;
 }
 
@@ -94,14 +88,14 @@ function generateHistoricalPrices(ticker) {
         const formattedDate = date.toISOString().split('T')[0];
         historicalPrices.push({
             date: formattedDate,
-            price: getPrice(hashDateTime(date, ticker, false))
+            price: getValue(hashDateTime(date, ticker, false), BigInt('0xffff'))
 
         });
     }
     return historicalPrices;
 }
 
-//Hashes dateTime with Ticker name to create a unique price for that day: important for historical prices.
+//Hashes dateTime with Ticker name to create a unique price for that ticker on that day: important for historical prices.
 function hashDateTime(dateTime, inputString, checkPF) {
     let input = `${dateTime.toISOString()}${inputString}`;
     if (checkPF) { input = `${dateTime.toISOString()}${inputString}${username}`; }
@@ -109,13 +103,35 @@ function hashDateTime(dateTime, inputString, checkPF) {
     return hash;
 }
 
-function hashPF(){
-    const hash = crypto.createHash('sha256').update(username).digest('hex');
-    const hashString =  Buffer.from(hash, 'hex').toString();
-    //Find out first the num of tickers in portofolio
-    //split hash string into num of tickers
-    //split hash string -> numbers % 20 to find out which ticker
-    return hash;
+function hashPF() {
+    const hashUser = crypto.createHash('sha256').update(username).digest('hex');
+    var tickerAmount = getValue(hashUser, 10) + 1;
+    const hashInt = BigInt('0x' + Buffer.from(hashUser, 'hex').toString('hex'))
+    const hashString = hashInt.toString();
+    var arr = splitStringBySize(hashString, 2)
+    arr = arr.map(item => (
+        (Number(item) % 20)
+    ));
+    if (tickerAmount > arr.length) { tickerAmount = arr.length; }
+    arr = arr.slice(0, (tickerAmount + 1));
+    arr = Array.from(countUnique(arr));
+
+    const portfolio = arr.map(ticker => ({
+        symbol: tickers[ticker],
+        price: getValue(hashDateTime(currentDate, tickers[ticker], true), BigInt('0xffff'))
+    }));
+
+    return portfolio;
 }
+
+function countUnique(iterable) {
+    return new Set(iterable);
+}
+
+function splitStringBySize(str, sizeInt) {
+    const regex = new RegExp(`.{1,${sizeInt}}`, 'g');
+    return str.match(regex);
+}
+
 
 export default app
