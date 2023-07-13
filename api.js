@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const app = express();
 const currentDate = new Date();
+const port = process.env.PORT || 8080;
 var username;
 
 const tickers = [
@@ -56,8 +57,6 @@ app.use((req, res, next) => {
 })
 
 app.get('/tickers', (req, res) => {
-
-
     res.json(hashPF());
 });
 
@@ -67,7 +66,6 @@ app.get('/tickers/:ticker/history', (req, res) => {
         res.status(404).json({ error: 'Ticker not found' });
         return;
     }
-
     const historicalPrices = generateHistoricalPrices(ticker);
     res.json(historicalPrices);
 });
@@ -84,11 +82,9 @@ function generateHistoricalPrices(ticker) {
     for (let i = 0; i < 90; i++) {
         const date = new Date(currentDate);
         date.setDate(date.getDate() - i);
-        const formattedDate = date.toISOString().split('T')[0];
         historicalPrices.push({
-            date: formattedDate,
+            date: date.toISOString().split('T')[0],
             price: getValue(hashDateTime(date, ticker, false), BigInt('0xffff'))
-
         });
     }
     return historicalPrices;
@@ -133,7 +129,6 @@ function splitStringBySize(str, sizeInt) {
     return str.match(regex);
 }
 
-const port = 8080;
 
 app.listen(port, () => {
     console.log(`Server is listening on port ${port}`);
