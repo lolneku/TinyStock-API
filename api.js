@@ -66,8 +66,7 @@ app.get('/tickers/:ticker/history', (req, res) => {
         res.status(404).json({ error: 'Ticker not found' });
         return;
     }
-    const historicalPrices = generateHistoricalPrices(ticker);
-    res.json(historicalPrices);
+    res.json(generateHistoricalPrices(ticker));
 });
 
 //Get a double from a hash input then % by maxInt
@@ -104,7 +103,8 @@ function hashPF() {
     var tickerAmount = getValue(hashUser, 10) + 1;
     const hashInt = BigInt('0x' + Buffer.from(hashUser, 'hex').toString('hex'))
     const hashString = hashInt.toString();
-    var arr = splitStringBySize(hashString, 2)
+    const regex = new RegExp(`.{1,${sizeInt}}`, 'g');
+    var arr = hashString.match(regex);
     arr = arr.map(item => (
         (Number(item) % 20)
     ));
@@ -123,12 +123,6 @@ function hashPF() {
 function countUnique(iterable) {
     return new Set(iterable);
 }
-
-function splitStringBySize(str, sizeInt) {
-    const regex = new RegExp(`.{1,${sizeInt}}`, 'g');
-    return str.match(regex);
-}
-
 
 app.listen(port, () => {
     console.log(`Server is listening on port ${port}`);
