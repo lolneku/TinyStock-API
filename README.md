@@ -32,4 +32,4 @@ Open your preferred tool and send the following requests:
 
 `GET http://localhost:<host_port>/tickers/{ticker}/history`
 
-Where {ticker} is the symbol of said ticker ie. `GET http://localhost:8080/tickers/AAPL/history`
+Where {ticker} is the symbol of said ticker ie. `GET http://localhost:<host_port>/tickers/AAPL/history`
