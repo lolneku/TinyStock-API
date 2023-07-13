@@ -1,6 +1,6 @@
 # TinyStock-API
-Backend Software Challenge
 
+Backend Software Challenge
 
 How to set up the server and run sample HTTP requests for this solution, follow these instructions:
 
@@ -14,11 +14,13 @@ Open your terminal or command prompt and navigate to the directory where you wan
 In your terminal or command prompt, navigate to your project directory.
 
 Step 4: Running the server
-Run the following command to start the server:
+Run the following commands to start the server:
 
-`node .`
+`docker build -t tinystock .`
 
-You should see a message indicating that the server is listening on a specific port (in this case, port 8080).
+`docker run -p <host_port>:8080 tinystock`
+
+You should see a message indicating that the container is listening on a specific port (in this case, port 8080).
 
 You can now send sample HTTP requests to the server using a tool like insomnia or a web browser.
 Open your preferred tool and send the following requests:
