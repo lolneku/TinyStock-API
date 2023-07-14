@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../api');
+const { app, getDate } = require('../api');
 
 describe('GET /tickers', () => {
     it('should return an array of tickers', async () => {
@@ -9,6 +9,11 @@ describe('GET /tickers', () => {
         expect(response.status).toBe(200);
         expect(Array.isArray(response.body)).toBe(true);
     });
+
+    it('should retrieve the date of invocation', () => {
+        const today = new Date()
+        expect(getDate()).toEqual(today);
+    })
 });
 
 describe('GET /tickers/:ticker/history', () => {
@@ -30,5 +35,10 @@ describe('GET /tickers/:ticker/history', () => {
         expect(response.status).toBe(404);
         expect(response.body).toHaveProperty('error', 'Ticker not found');
     });
+
+    it('should retrieve the date of invocation', () => {
+        const today = new Date()
+        expect(getDate()).toEqual(today);
+    })
 });
 

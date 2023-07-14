@@ -1,9 +1,9 @@
 const express = require('express');
 const crypto = require('crypto');
 const app = express();
-const currentDate = new Date();
 const port = process.env.PORT || 8080;
 var username;
+var currentDate;
 
 const tickers = [
     "AAPL",
@@ -57,10 +57,12 @@ app.use((req, res, next) => {
 })
 
 app.get('/tickers', (req, res) => {
+    getDate();
     res.json(hashPF());
 });
 
 app.get('/tickers/:ticker/history', (req, res) => {
+    getDate();
     const ticker = req.params.ticker.toUpperCase();
     if (!tickers.includes(ticker)) {
         res.status(404).json({ error: 'Ticker not found' });
@@ -69,6 +71,8 @@ app.get('/tickers/:ticker/history', (req, res) => {
     res.json(generateHistoricalPrices(ticker));
 });
 
+
+function getDate() { return currentDate = new Date(); }
 //Get a double from a hash input then % by maxInt
 function getValue(hashedValue, maxInt) {
     const hashInteger = BigInt('0x' + Buffer.from(hashedValue, 'hex').toString('hex'));
@@ -103,11 +107,13 @@ function hashPF() {
     var tickerAmount = getValue(hashUser, 10) + 1;
     const hashInt = BigInt('0x' + Buffer.from(hashUser, 'hex').toString('hex'))
     const hashString = hashInt.toString();
-    const regex = new RegExp(`.{1,${sizeInt}}`, 'g');
+    const regex = new RegExp(`.{1,2}`, 'g');
     var arr = hashString.match(regex);
+
     arr = arr.map(item => (
         (Number(item) % 20)
     ));
+
     if (tickerAmount > arr.length) { tickerAmount = arr.length; }
     arr = arr.slice(0, (tickerAmount + 1));
     arr = Array.from(countUnique(arr));
@@ -128,4 +134,4 @@ app.listen(port, () => {
     console.log(`Server is listening on port ${port}`);
 });
 
-module.exports = app;
+module.exports = { app, getDate };
