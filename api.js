@@ -3,7 +3,6 @@ const crypto = require('crypto');
 const app = express();
 const port = process.env.PORT || 8080;
 var username;
-var currentDate;
 
 const tickers = [
     "AAPL",
@@ -57,12 +56,10 @@ app.use((req, res, next) => {
 })
 
 app.get('/tickers', (req, res) => {
-    getDate();
     res.json(hashPF());
 });
 
 app.get('/tickers/:ticker/history', (req, res) => {
-    getDate();
     const ticker = req.params.ticker.toUpperCase();
     if (!tickers.includes(ticker)) {
         res.status(404).json({ error: 'Ticker not found' });
@@ -72,37 +69,38 @@ app.get('/tickers/:ticker/history', (req, res) => {
 });
 
 
-function getDate() { return currentDate = new Date(); }
 //Get a double from a hash input then % by maxInt
 function getValue(hashedValue, maxInt) {
     const hashInteger = BigInt('0x' + Buffer.from(hashedValue, 'hex').toString('hex'));
-    const doubleValue = Number(hashInteger) % Number(maxInt);
+    const doubleValue = (Number(hashInteger) % Number(maxInt)) / 100;
     return doubleValue;
 }
 
 function generateHistoricalPrices(ticker) {
     const historicalPrices = [];
     for (let i = 0; i < 90; i++) {
-        const date = new Date(currentDate);
+        var date = new Date();
         date.setDate(date.getDate() - i);
+        date = date.toISOString().split('T')[0];
         historicalPrices.push({
-            date: date.toISOString().split('T')[0],
-            price: getValue(hashDateTime(date, ticker, false), BigInt('0xffff'))
+            date: date,
+            price: getValue(hashDateTime(date, ticker, false), BigInt('0xffff')).toFixed(2)
         });
     }
     return historicalPrices;
 }
 
 //Hashes dateTime with Ticker name to create a unique price for that ticker on that day; important for historical prices.
-function hashDateTime(dateTime, inputString, checkPF) {
-    let input = `${dateTime.toISOString()}${inputString}`;
-    if (checkPF) { input = `${dateTime.toISOString()}${inputString}${username}`; }
+function hashDateTime(date, inputString, checkPF) {
+    let input = `${date}${inputString}`;
+    if (checkPF) { input = `${date}${inputString}${username}`; }
     const hash = crypto.createHash('sha256').update(input).digest('hex');
     return hash;
 }
 
 //Creates portfolio, uses a BigInt from the hash value of username to generate the tickers which will display in portfolio
 function hashPF() {
+    const date = new Date().toISOString().split('T')[0];
     const hashUser = crypto.createHash('sha256').update(username).digest('hex');
     var tickerAmount = getValue(hashUser, 10) + 1;
     const hashInt = BigInt('0x' + Buffer.from(hashUser, 'hex').toString('hex'))
@@ -120,7 +118,7 @@ function hashPF() {
 
     const portfolio = arr.map(ticker => ({
         symbol: tickers[ticker],
-        price: getValue(hashDateTime(currentDate, tickers[ticker], true), BigInt('0xffff'))
+        price: getValue(hashDateTime(date, tickers[ticker], true), BigInt('0xffff')).toFixed(2)
     }));
 
     return portfolio;
@@ -134,4 +132,4 @@ app.listen(port, () => {
     console.log(`Server is listening on port ${port}`);
 });
 
-module.exports = { app, getDate };
+module.exports = { app };
